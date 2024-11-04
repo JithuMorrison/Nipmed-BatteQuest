@@ -13,8 +13,6 @@ Welcome to **BattleQuest**! This is a fun and engaging game where you can pop co
 ## Features
 - **Bubble Popping:** Tap to pop bubbles of various colors for points.
 - **Donut Swinging:** Swing donuts to collect bonuses and power-ups.
-- **Challenging Levels:** Overcome increasing difficulty with unique challenges.
-- **Power-ups:** Unlock special abilities for enhanced gameplay.
 - **Colorful Graphics & Sounds:** Enjoy vibrant visuals and engaging sound effects.
 
 ## Gameplay
