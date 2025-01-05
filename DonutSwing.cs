@@ -83,12 +83,13 @@ public class DonutSwing : MonoBehaviour {
     {
         // Debugging the collision detection
         Debug.Log("Trigger Detected with: " + collision.gameObject.name);
-
-        // Check if the donut is not already hidden
-        if (!isHidden)  
-        {
-            // Hide the donut upon collision
-            HideDonut();
+        if(collision.CompareTag("Face")){
+            // Check if the donut is not already hidden
+            if (!isHidden)  
+            {
+                // Hide the donut upon collision
+                HideDonut();
+            }
         }
     }
 
