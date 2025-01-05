@@ -6,19 +6,16 @@ using UnityEngine.UI;
 public class Hand : MonoBehaviour
 {
 	public Transform mHandMesh;
-	public AudioClip collisionSound; // Reference to the audio clip
-	private AudioSource audioSource; // Reference to the AudioSource component
+	public AudioClip collisionSound;
+	private AudioSource audioSource;
 	private int score = 0;
 
 	private void Start()
 	{
-		// Get the AudioSource component from this GameObject or its children
 		audioSource = GetComponent<AudioSource>();
 		if (audioSource == null)
 			audioSource = gameObject.AddComponent<AudioSource>();
-		// Set the audio clip
 		audioSource.clip = collisionSound;
-		// Set volume to full
 		audioSource.volume = 1.0f;
 	}
 
@@ -30,10 +27,10 @@ public class Hand : MonoBehaviour
 	private void OnTriggerEnter2D(Collider2D collision)
 	{ 
 
-		if(collision.gameObject.CompareTag("Bubble") || collision.gameObject.CompareTag("Untagged")){
+		if(collision.gameObject.CompareTag("Bubble") || collision.gameObject.CompareTag("RedBubble")){
 			Bubble bubble = collision.gameObject.GetComponent<Bubble>();
 			StartCoroutine(bubble.Pop());
-
+			score = PlayerPrefs.GetInt("PlayerScore");
 			if (!collision.gameObject.CompareTag ("Bubble"))
 				score--;
 			else {
@@ -42,12 +39,23 @@ public class Hand : MonoBehaviour
 
 			PlayerPrefs.SetInt("PlayerScore", score);
 			PlayerPrefs.Save();
-			Debug.Log(PlayerPrefs.GetInt("PlayerScore"));
 
 			if (audioSource != null && collisionSound != null)
 			{
 				audioSource.Play();
 			}
+		}
+		if(collision.gameObject.CompareTag("Bird")){
+			Destroy(collision.gameObject);
+			score = PlayerPrefs.GetInt("PlayerScore");
+			if (!collision.gameObject.CompareTag ("Bird"))
+				score--;
+			else {
+				score++;
+			}
+
+			PlayerPrefs.SetInt("PlayerScore", score);
+			PlayerPrefs.Save();
 		}
 	}
 
