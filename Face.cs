@@ -19,6 +19,7 @@ public class Face : MonoBehaviour {
 		audioSource.clip = collisionSound;
 		// Set volume to full
 		audioSource.volume = 1.0f;
+		PlayerPrefs.SetInt("PlayerScore", score);
 	}
 	
 	// Update is called once per frame
@@ -27,25 +28,42 @@ public class Face : MonoBehaviour {
 	}
 	private void OnTriggerEnter2D(Collider2D collision)
 	{ 
-
-		if(collision.gameObject.CompareTag("Bubble") || collision.gameObject.CompareTag("Untagged")){
+		if(collision.gameObject.CompareTag("RedBubble")){
 			Bubble bubble = collision.gameObject.GetComponent<Bubble>();
 			StartCoroutine(bubble.Pop());
-
-			if (!collision.gameObject.CompareTag ("Bubble"))
+			score = PlayerPrefs.GetInt("PlayerScore");
+			if (collision.gameObject.CompareTag ("RedBubble"))
 				score--;
-			else {
-				score++;
-			}
 
 			PlayerPrefs.SetInt("PlayerScore", score);
 			PlayerPrefs.Save();
-			Debug.Log(PlayerPrefs.GetInt("PlayerScore"));
 
 			if (audioSource != null && collisionSound != null)
 			{
 				audioSource.Play();
 			}
+		}
+		if(collision.gameObject.CompareTag("Donut")){
+			score = PlayerPrefs.GetInt("PlayerScore");
+			if (collision.gameObject.CompareTag ("Donut"))
+				score++;
+
+			PlayerPrefs.SetInt("PlayerScore", score);
+			PlayerPrefs.Save();
+
+			if (audioSource != null && collisionSound != null)
+			{
+				audioSource.Play();
+			}
+		}
+		if(collision.gameObject.CompareTag("Shark")){
+			Destroy(collision.gameObject);
+			score = PlayerPrefs.GetInt("PlayerScore");
+			if (collision.gameObject.CompareTag ("Shark"))
+				score++;
+
+			PlayerPrefs.SetInt("PlayerScore", score);
+			PlayerPrefs.Save();
 		}
 	}
 }
