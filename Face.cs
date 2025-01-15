@@ -8,6 +8,7 @@ public class Face : MonoBehaviour {
 	public Transform mFaceMesh;
 	public AudioClip collisionSound; // Reference to the audio clip
 	private AudioSource audioSource; // Reference to the AudioSource component
+	public AudioClip coinClash;
 	private int score = 0;
 	// Use this for initialization
 	void Start () {
@@ -15,8 +16,6 @@ public class Face : MonoBehaviour {
 		audioSource = GetComponent<AudioSource>();
 		if (audioSource == null)
 			audioSource = gameObject.AddComponent<AudioSource>();
-		// Set the audio clip
-		audioSource.clip = collisionSound;
 		// Set volume to full
 		audioSource.volume = 1.0f;
 		PlayerPrefs.SetInt("PlayerScore", score);
@@ -40,6 +39,7 @@ public class Face : MonoBehaviour {
 
 			if (audioSource != null && collisionSound != null)
 			{
+				audioSource.clip = collisionSound;
 				audioSource.Play();
 			}
 		}
@@ -53,6 +53,7 @@ public class Face : MonoBehaviour {
 
 			if (audioSource != null && collisionSound != null)
 			{
+				audioSource.clip = collisionSound;
 				audioSource.Play();
 			}
 		}
@@ -64,6 +65,12 @@ public class Face : MonoBehaviour {
 
 			PlayerPrefs.SetInt("PlayerScore", score);
 			PlayerPrefs.Save();
+
+			if (audioSource != null && collisionSound != null)
+			{
+				audioSource.clip = coinClash;
+				audioSource.Play();
+			}
 		}
 	}
 }
