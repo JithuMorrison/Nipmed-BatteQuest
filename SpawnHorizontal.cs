@@ -8,8 +8,9 @@ public class SpawnHorizontal : MonoBehaviour {
     public Transform spawnPoint;
     public float minSpawnInterval = 1.0f;
     public float maxSpawnInterval = 3.0f;
-    public float objectSpeed = 5.0f;
     private int lastScoreChecked = 0;
+	private float heightIncrease = 0.0f;
+	public float objectSpeed = 5.0f;
 
     private void Start()
     {
@@ -20,7 +21,7 @@ public class SpawnHorizontal : MonoBehaviour {
         int playerScore = PlayerPrefs.GetInt ("PlayerScore");
         if (playerScore > 0 && playerScore % 10 == 0 && playerScore != lastScoreChecked)
         {
-            objectSpeed+=5;
+            heightIncrease += 0.2f;
             lastScoreChecked=playerScore;
         }
     }
@@ -41,6 +42,7 @@ public class SpawnHorizontal : MonoBehaviour {
         {
             int randomIndex = Random.Range(0, objectsToSpawn.Length);
             GameObject randomObject = objectsToSpawn[randomIndex];
+			spawnPoint.position = spawnPoint.position + new Vector3(0, heightIncrease, 0);
             GameObject spawnedObject = Instantiate(randomObject, spawnPoint.position, spawnPoint.rotation);
             spawnedObject.AddComponent<MoveSide>().speed = objectSpeed;
         }
