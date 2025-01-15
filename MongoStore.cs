@@ -82,40 +82,42 @@ public class MongoStore : MonoBehaviour
             yield break;
         }
 
-        foreach (var log in collisionLogs)
+        string json = JsonUtility.ToJson(new CollisionLogList { logs = collisionLogs });
+
+        // Create a POST request to send the data
+        using (UnityWebRequest request = new UnityWebRequest(apiUrl, "POST"))
         {
-            // Create a JSON object to send to the server
-            string json = JsonUtility.ToJson(log);
+            byte[] jsonData = System.Text.Encoding.UTF8.GetBytes(json);
+            request.uploadHandler = new UploadHandlerRaw(jsonData);
+            request.downloadHandler = new DownloadHandlerBuffer();
+            request.SetRequestHeader("Content-Type", "application/json");
 
-            // Create a POST request to send the data
-            using (UnityWebRequest request = new UnityWebRequest(apiUrl, "POST"))
+            // Send the request and wait for a response
+            yield return request.SendWebRequest();
+
+            if (request.isNetworkError || request.isHttpError)
             {
-                byte[] jsonData = System.Text.Encoding.UTF8.GetBytes(json);
-                request.uploadHandler = new UploadHandlerRaw(jsonData);
-                request.downloadHandler = new DownloadHandlerBuffer();
-                request.SetRequestHeader("Content-Type", "application/json");
-
-                // Send the request and wait for a response
-                yield return request.SendWebRequest();
-
-                if (request.isNetworkError || request.isHttpError)
-                {
-                    Debug.LogError("Failed to upload log: " + request.error);
-                }
-                else
-                {
-                    Debug.Log("Log successfully uploaded: " + log.Score + " at " + log.CollisionTime);
-                }
+                Debug.LogError("Failed to upload logs: " + request.error);
+            }
+            else
+            {
+                Debug.Log("Logs successfully uploaded.");
             }
         }
     }
 }
 
-// Data structure for storing collision details (including score)
 [Serializable]
 public class CollisionData
 {
     public string ObjectName; // Name of the object (e.g., "PlayerScore" for score updates)
     public string CollisionTime; // Time of the update
     public int Score; // Current score at the time of the update
+}
+
+// Wrapper for sending a list of logs as a JSON array
+[Serializable]
+public class CollisionLogList
+{
+    public List<CollisionData> logs; // List of all collision logs
 }
