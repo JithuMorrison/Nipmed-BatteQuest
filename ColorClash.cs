@@ -16,7 +16,7 @@ public class ColorClash : MonoBehaviour
 
     private string[] colorNames = { "Green", "Red", "Blue", "Yellow", "Purple", "Black" };
     private string correctColor;
-    private float timer = 5f;
+    private float timer = 10f;
 	private string triggeredColor;
 
     void Start()
@@ -54,15 +54,14 @@ public class ColorClash : MonoBehaviour
                 Debug.Log("Wrong! Boo!");
                 PlaySound(booClip);
             }
-            StartCoroutine(ExecuteAfterDelay(2.0f));
+            StartCoroutine(ExecuteAfterDelay(10.0f));
         }
     }
 
     IEnumerator ExecuteAfterDelay(float delay)
     {
         yield return new WaitForSeconds(delay);
-        Debug.Log("2 seconds have passed!");
-        RestartGame();
+        Debug.Log("10 seconds have passed!");
     }
 
     void RestartGame()
