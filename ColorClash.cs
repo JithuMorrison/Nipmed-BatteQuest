@@ -13,6 +13,8 @@ public class ColorClash : MonoBehaviour
     public AudioClip yayClip;             // Audio clip for "Yay"
     public AudioClip booClip;             // Audio clip for "Boo"
     public AudioClip[] colorAudioClips;   // Audio clips for each color name (length = 6)
+    public GameObject highlightPrefab;
+    public GameObject backgroundOverlay; // Assign in Unity Inspector
 
     private string[] colorNames = { "Green", "Red", "Blue", "Yellow", "Purple", "Black" };
     private string correctColor;
@@ -66,7 +68,7 @@ public class ColorClash : MonoBehaviour
 
     void RestartGame()
     {
-        timer = 5f;
+        timer = 10f;
 
         // Clear existing buttons at spawn points
         foreach (Transform spawnPoint in spawnPoints)
@@ -82,18 +84,69 @@ public class ColorClash : MonoBehaviour
         for (int i = 0; i < colorPrefabs.Length; i++) indices.Add(i);
         Shuffle(indices);
 
-        // Spawn buttons at spawn points
+        GameObject correctObject = null;
+        int correctIndex = Random.Range(0, spawnPoints.Length);
+        
         for (int i = 0; i < spawnPoints.Length; i++)
         {
             Transform spawnPoint = spawnPoints[i];
             GameObject button = Instantiate(colorPrefabs[indices[i]], spawnPoint);
             button.transform.localPosition = Vector3.zero;
+
+            // Pick the correct color object
+            if (i == correctIndex)
+            {
+                correctObject = button;
+                correctColor = colorNames[indices[i]];
+            }
         }
 
-        // Pick a random correct color
-        int correctIndex = indices[Random.Range(0, indices.Count)];
-        correctColor = colorNames[correctIndex];
-        correctColorText.text = "Click: " + correctColor;
+        // Show the correct color visually
+        correctColorText.text = "Click: " + correctColor; // Hide text, since we highlight the object instead
+
+        // Highlight the correct object with a red circle
+        if (correctObject != null)
+        {
+            StartCoroutine(HighlightCorrectObject(correctObject));
+        }
+
+        // Dim the background
+        StartCoroutine(DimBackground());
+    }
+
+    IEnumerator DimBackground()
+    {
+        if (backgroundOverlay == null)
+        {
+            Debug.LogError("Background Overlay is not assigned in the Inspector!");
+            yield break;
+        }
+
+        backgroundOverlay.SetActive(true); // Enable the dark overlay
+
+        yield return new WaitForSeconds(3f);
+
+        backgroundOverlay.SetActive(false); // Hide the overlay after time expires
+    }
+
+    IEnumerator HighlightCorrectObject(GameObject obj)
+    {
+        if (highlightPrefab == null)
+        {
+            Debug.LogError("Highlight Prefab is not assigned in the Inspector!");
+            yield break;
+        }
+
+        // Instantiate the highlight effect as a child of the correct object
+        GameObject highlight = Instantiate(highlightPrefab, obj.transform);
+        
+        highlight.transform.localPosition = Vector3.zero; // Center it
+        highlight.transform.localRotation = Quaternion.identity; // Reset rotation
+        highlight.transform.localScale = Vector3.one * 0.24f; // Fixed scale, independent of the object size
+
+        yield return new WaitForSeconds(3f);
+
+        Destroy(highlight); // Remove after 5 seconds
     }
 
     void PlaySound(AudioClip clip)
