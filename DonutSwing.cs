@@ -1,49 +1,58 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class DonutSwing : MonoBehaviour {
-
-	public Transform anchorPoint;  // The point from which the donut is hanging
+public class DonutSwing : MonoBehaviour
+{
+    public Transform anchorPoint;  // The point from which the donut is hanging
     public float maxRopeLength = 3f;  // Maximum rope length
     public float minRopeLength = 2f;  // Minimum rope length
     public float swingSpeed = 2f;  // Speed of the swing
     public float ropeChangeSpeed = 0.5f;  // Speed at which the rope length changes
-    public float maxSwingAngle = 90f; // Maximum swing angle (90 degrees for 180 total degrees)
+    public float maxSwingAngle = 90f; // Maximum swing angle
+    public Sprite highlightSprite; // Image to highlight the donut
 
     private float currentRopeLength;
     private float swingAngle = 0f;
     private bool ropeLengthIncreasing = true;
+    private bool isSwinging = true;
 
-    private LineRenderer lineRenderer;  // LineRenderer to simulate the rope
-    private SpriteRenderer donutRenderer;  // To hide/show the donut
-    private Collider2D donutCollider;  // To enable/disable collision
-    private bool isHidden = false;  // To check if donut is hidden
+    private LineRenderer lineRenderer;
+    private SpriteRenderer donutRenderer;
+    private Collider2D donutCollider;
+    private SpriteRenderer highlightRenderer;
+
+    private bool isHidden = false;
 
     void Start()
     {
-        currentRopeLength = maxRopeLength;  // Start with the maximum rope length
+        currentRopeLength = maxRopeLength;
 
-        // Fetch components
         lineRenderer = gameObject.AddComponent<LineRenderer>();
-        lineRenderer.positionCount = 2; // Start and end points of the rope
-        lineRenderer.startWidth = 0.05f; // Start thickness of the rope
-        lineRenderer.endWidth = 0.05f;   // End thickness of the rope
+        lineRenderer.positionCount = 2;
+        lineRenderer.startWidth = 0.05f;
+        lineRenderer.endWidth = 0.05f;
 
         donutRenderer = GetComponent<SpriteRenderer>();
         donutCollider = GetComponent<Collider2D>();
 
-        // Debug: Check if the components are properly assigned
-        Debug.Log("Donut Renderer assigned: " + (donutRenderer != null));
-        Debug.Log("Donut Collider assigned: " + (donutCollider != null));
+        // Create the highlight effect
+        GameObject highlight = new GameObject("Highlight");
+        highlight.transform.parent = transform;
+        highlight.transform.localPosition = Vector3.zero;
+
+        highlightRenderer = highlight.AddComponent<SpriteRenderer>();
+        highlightRenderer.sprite = highlightSprite;
+        highlightRenderer.sortingOrder = donutRenderer.sortingOrder - 1;
+        highlightRenderer.color = new Color(1f, 1f, 1f, 0f);  // Initially transparent
     }
 
     void Update()
     {
-        if (!isHidden)
+        if (!isHidden && isSwinging)
         {
             Swing();
             UpdateRopeLength();
+            CheckForMiddleStop();
         }
         UpdateRope();
     }
@@ -51,8 +60,8 @@ public class DonutSwing : MonoBehaviour {
     void Swing()
     {
         swingAngle = Mathf.Sin(Time.time * swingSpeed) * maxSwingAngle;
-        float swingX = Mathf.Sin(swingAngle * Mathf.Deg2Rad) * currentRopeLength;  // X position based on angle
-        float swingY = Mathf.Cos(swingAngle * Mathf.Deg2Rad) * currentRopeLength;  // Y position based on angle
+        float swingX = Mathf.Sin(swingAngle * Mathf.Deg2Rad) * currentRopeLength;
+        float swingY = Mathf.Cos(swingAngle * Mathf.Deg2Rad) * currentRopeLength;
         transform.position = new Vector3(anchorPoint.position.x + swingX, anchorPoint.position.y - swingY, transform.position.z);
     }
 
@@ -74,20 +83,43 @@ public class DonutSwing : MonoBehaviour {
 
     void UpdateRope()
     {
-        lineRenderer.SetPosition(0, anchorPoint.position);  // Rope start (anchor)
-        lineRenderer.SetPosition(1, transform.position);    // Rope end (donut)
+        lineRenderer.SetPosition(0, anchorPoint.position);
+        lineRenderer.SetPosition(1, transform.position);
     }
 
-    // Use OnTriggerEnter2D for trigger detection
+    void CheckForMiddleStop()
+    {
+        // Check if the donut is near the middle of the screen
+        Vector3 screenPos = Camera.main.WorldToViewportPoint(transform.position);
+        float middleThreshold = 0.12f; // Adjust this value to control how close to the middle is considered "near"
+
+        if (Mathf.Abs(screenPos.x - 0.5f) < middleThreshold && Mathf.Abs(screenPos.y - 0.5f) < middleThreshold)
+        {
+            if (isSwinging)
+            {
+                StopSwingForDuration(2f); // Stop for 5 seconds
+            }
+        }
+    }
+
+    private void StopSwingForDuration(float duration)
+    {
+        isSwinging = false;
+        StartCoroutine(ResumeSwingAfterDelay(duration));
+    }
+
+    private IEnumerator ResumeSwingAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        isSwinging = true;
+    }
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        // Debugging the collision detection
-        Debug.Log("Trigger Detected with: " + collision.gameObject.name);
-        if(collision.CompareTag("Face")){
-            // Check if the donut is not already hidden
-            if (!isHidden)  
+        if (collision.CompareTag("Face"))
+        {
+            if (!isHidden)
             {
-                // Hide the donut upon collision
                 HideDonut();
             }
         }
@@ -96,26 +128,8 @@ public class DonutSwing : MonoBehaviour {
     private void HideDonut()
     {
         isHidden = true;
-
-        // Ensure components are not null before using them
-        if (donutRenderer != null)
-        {
-            donutRenderer.enabled = false;  // Hide the donut's sprite
-        }
-        else
-        {
-            Debug.LogError("Donut Renderer is null!");
-        }
-
-        if (donutCollider != null)
-        {
-            donutCollider.enabled = false;  // Disable collision
-        }
-        else
-        {
-            Debug.LogError("Donut Collider is null!");
-        }
-
+        if (donutRenderer != null) donutRenderer.enabled = false;
+        if (donutCollider != null) donutCollider.enabled = false;
         Debug.Log("Donut Hidden");
 
         StartCoroutine(ReappearDonut());
@@ -123,21 +137,23 @@ public class DonutSwing : MonoBehaviour {
 
     private IEnumerator ReappearDonut()
     {
-        yield return new WaitForSeconds(10f);  // Wait for 10 seconds
-
-        // Show the donut's sprite and enable collision
-        if (donutRenderer != null)
-        {
-            donutRenderer.enabled = true;
-        }
-
-        if (donutCollider != null)
-        {
-            donutCollider.enabled = true;
-        }
-
+        yield return new WaitForSeconds(10f);
+        if (donutRenderer != null) donutRenderer.enabled = true;
+        if (donutCollider != null) donutCollider.enabled = true;
         isHidden = false;
-
         Debug.Log("Donut Reappeared");
+    }
+
+    private IEnumerator FadeHighlight(float startAlpha, float endAlpha, float duration)
+    {
+        float time = 0f;
+        while (time < duration)
+        {
+            time += Time.deltaTime;
+            float alpha = Mathf.Lerp(startAlpha, endAlpha, time / duration);
+            highlightRenderer.color = new Color(1f, 1f, 1f, alpha);
+            yield return null;
+        }
+        highlightRenderer.color = new Color(1f, 1f, 1f, endAlpha);
     }
 }
