@@ -9,7 +9,7 @@ public class DonutSwing : MonoBehaviour
     public float swingSpeed = 2f;  // Speed of the swing
     public float ropeChangeSpeed = 0.5f;  // Speed at which the rope length changes
     public float maxSwingAngle = 90f; // Maximum swing angle
-    public Sprite highlightSprite; // Image to highlight the donut
+    public int requiredSwingCondition = 1; // The value that must match to allow swinging
 
     private float currentRopeLength;
     private float swingAngle = 0f;
@@ -19,9 +19,13 @@ public class DonutSwing : MonoBehaviour
     private LineRenderer lineRenderer;
     private SpriteRenderer donutRenderer;
     private Collider2D donutCollider;
-    private SpriteRenderer highlightRenderer;
 
     private bool isHidden = false;
+    private float lastStopTime = -7f; // Ensures the first stop can happen immediately
+    private float pauseTime; // Time when the swing was paused
+    private float pausedSwingAngle; // Swing angle when the swing was paused
+
+    private DonutSwingController swingController; // Reference to the DonutSwingController
 
     void Start()
     {
@@ -35,31 +39,33 @@ public class DonutSwing : MonoBehaviour
         donutRenderer = GetComponent<SpriteRenderer>();
         donutCollider = GetComponent<Collider2D>();
 
-        // Create the highlight effect
-        GameObject highlight = new GameObject("Highlight");
-        highlight.transform.parent = transform;
-        highlight.transform.localPosition = Vector3.zero;
-
-        highlightRenderer = highlight.AddComponent<SpriteRenderer>();
-        highlightRenderer.sprite = highlightSprite;
-        highlightRenderer.sortingOrder = donutRenderer.sortingOrder - 1;
-        highlightRenderer.color = new Color(1f, 1f, 1f, 0f);  // Initially transparent
+        // Find the DonutSwingController in the scene
+        swingController = FindObjectOfType<DonutSwingController>();
+        if (swingController == null)
+        {
+            Debug.LogError("DonutSwingController not found in the scene!");
+        }
     }
 
     void Update()
     {
-        if (!isHidden && isSwinging)
+        // Check if the swing condition is met
+        if (swingController != null && swingController.swingCondition == requiredSwingCondition)
         {
-            Swing();
-            UpdateRopeLength();
-            CheckForMiddleStop();
+            if (!isHidden && isSwinging)
+            {
+                Swing();
+                UpdateRopeLength();
+                CheckForMiddleStop();
+            }
+            UpdateRope();
         }
-        UpdateRope();
     }
 
     void Swing()
     {
-        swingAngle = Mathf.Sin(Time.time * swingSpeed) * maxSwingAngle;
+        // Calculate the swing angle based on time and speed
+        swingAngle = Mathf.Sin((Time.time - pauseTime) * swingSpeed) * maxSwingAngle + pausedSwingAngle;
         float swingX = Mathf.Sin(swingAngle * Mathf.Deg2Rad) * currentRopeLength;
         float swingY = Mathf.Cos(swingAngle * Mathf.Deg2Rad) * currentRopeLength;
         transform.position = new Vector3(anchorPoint.position.x + swingX, anchorPoint.position.y - swingY, transform.position.z);
@@ -95,9 +101,10 @@ public class DonutSwing : MonoBehaviour
 
         if (Mathf.Abs(screenPos.x - 0.5f) < middleThreshold && Mathf.Abs(screenPos.y - 0.5f) < middleThreshold)
         {
-            if (isSwinging)
+            if (isSwinging && Time.time - lastStopTime >= 7f)
             {
-                StopSwingForDuration(2f); // Stop for 5 seconds
+                StopSwingForDuration(4f); // Stop for 4 seconds
+                lastStopTime = Time.time;
             }
         }
     }
@@ -105,6 +112,8 @@ public class DonutSwing : MonoBehaviour
     private void StopSwingForDuration(float duration)
     {
         isSwinging = false;
+        pausedSwingAngle = swingAngle; // Save the current swing angle
+        pauseTime = Time.time; // Save the time when the swing was paused
         StartCoroutine(ResumeSwingAfterDelay(duration));
     }
 
@@ -121,6 +130,12 @@ public class DonutSwing : MonoBehaviour
             if (!isHidden)
             {
                 HideDonut();
+                if(swingController.swingCondition == 0){
+                    swingController.swingCondition = 1;
+                }
+                else{
+                    swingController.swingCondition = 0;
+                }
             }
         }
     }
@@ -142,18 +157,5 @@ public class DonutSwing : MonoBehaviour
         if (donutCollider != null) donutCollider.enabled = true;
         isHidden = false;
         Debug.Log("Donut Reappeared");
-    }
-
-    private IEnumerator FadeHighlight(float startAlpha, float endAlpha, float duration)
-    {
-        float time = 0f;
-        while (time < duration)
-        {
-            time += Time.deltaTime;
-            float alpha = Mathf.Lerp(startAlpha, endAlpha, time / duration);
-            highlightRenderer.color = new Color(1f, 1f, 1f, alpha);
-            yield return null;
-        }
-        highlightRenderer.color = new Color(1f, 1f, 1f, endAlpha);
     }
 }
