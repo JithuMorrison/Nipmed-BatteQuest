@@ -15,11 +15,13 @@ public class ColorClash : MonoBehaviour
     public AudioClip[] colorAudioClips;   // Audio clips for each color name (length = 6)
     public GameObject highlightPrefab;
     public GameObject backgroundOverlay; // Assign in Unity Inspector
+    public Transform correctColorLoc;
 
-    private string[] colorNames = { "Green", "Red", "Blue", "Yellow", "Purple", "Black" };
+    private string[] colorNames = { "Lion", "Deer", "Cat", "Dog", "Koala", "Parrot" };
     private string correctColor;
     private float timer = 10f;
 	private string triggeredColor;
+    private GameObject guess;
 
     void Start()
     {
@@ -78,7 +80,10 @@ public class ColorClash : MonoBehaviour
                 Destroy(spawnPoint.GetChild(0).gameObject);
             }
         }
-
+        if (correctColorLoc.childCount > 0)
+        {
+            Destroy(correctColorLoc.GetChild(0).gameObject);
+        }
         // Shuffle colors
         List<int> indices = new List<int>();
         for (int i = 0; i < colorPrefabs.Length; i++) indices.Add(i);
@@ -98,6 +103,8 @@ public class ColorClash : MonoBehaviour
             {
                 correctObject = button;
                 correctColor = colorNames[indices[i]];
+                guess = Instantiate(colorPrefabs[indices[correctIndex]],correctColorLoc);
+                guess.transform.localPosition = Vector3.zero;
             }
         }
 
